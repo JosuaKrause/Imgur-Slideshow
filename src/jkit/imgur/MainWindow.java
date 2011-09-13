@@ -12,10 +12,12 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -26,6 +28,8 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.KeyStroke;
 
+import jkit.ini.IniReader;
+
 /**
  * @author Joschi <josua.krause@googlemail.com>
  * 
@@ -33,6 +37,37 @@ import javax.swing.KeyStroke;
 public class MainWindow extends JFrame {
 
 	private static final long serialVersionUID = 6503228194260524079L;
+
+	public static final IniReader INI = IniReader.createFailProofIniReader(
+			new File("iss.ini"), true);
+
+	public static final String SUBPAGE = INI.get("imgur", "subPage",
+			"r/earthporn");
+
+	public static final long DELAY = INI.getLong("slideShow", "delay", 60000);
+
+	public static int X = INI.getInteger("window", "left", -1);
+
+	public static int Y = INI.getInteger("window", "top", -1);
+
+	public static int WIDTH = INI.getInteger("window", "width", 800);
+
+	public static int HEIGHT = INI.getInteger("window", "height", 600);
+
+	public static final boolean EXCLUSIVE = INI.getBoolean("window",
+			"exclusiveFullScreen");
+
+	public static final boolean FULLSCREEN = INI.getBoolean("window",
+			"fullScreen");
+
+	public static void savePosition(MainWindow wnd) {
+		Point p = wnd.getLocation();
+		X = p.x;
+		Y = p.y;
+		Dimension dim = wnd.view.getSize();
+		WIDTH = dim.width;
+		HEIGHT = dim.height;
+	}
 
 	private final ImgurLoader loader;
 
@@ -100,6 +135,8 @@ public class MainWindow extends JFrame {
 
 	private Thread run;
 
+	private boolean fullScreen;
+
 	private boolean exclusiveFullscreen;
 
 	public MainWindow() {
@@ -107,11 +144,11 @@ public class MainWindow extends JFrame {
 		display = null;
 		displayDim = null;
 		loader = new ImgurLoader();
-		delay = 15000;
-		subPage = "r/earthporn";
+		delay = DELAY;
+		subPage = SUBPAGE;
 		setLayout(new BorderLayout());
 		setBackground(Color.BLACK);
-		view.setPreferredSize(new Dimension(800, 600));
+		view.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		add(view, BorderLayout.CENTER);
 		pack();
 		addMouseListener(new MouseAdapter() {
@@ -153,9 +190,12 @@ public class MainWindow extends JFrame {
 					return;
 				}
 				if (getExtendedState() != Frame.MAXIMIZED_BOTH) {
+					savePosition(MainWindow.this);
 					setExtendedState(Frame.MAXIMIZED_BOTH);
+					fullScreen = true;
 				} else {
 					setExtendedState(Frame.NORMAL);
+					fullScreen = false;
 				}
 				repaint();
 			}
@@ -167,6 +207,9 @@ public class MainWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (!fullScreen) {
+					savePosition(MainWindow.this);
+				}
 				GraphicsEnvironment ge = GraphicsEnvironment
 						.getLocalGraphicsEnvironment();
 				GraphicsDevice[] gs = ge.getScreenDevices();
@@ -194,8 +237,18 @@ public class MainWindow extends JFrame {
 		view.setFocusable(true);
 		view.grabFocus();
 		setFocusable(true);
-		setLocationRelativeTo(null);
+		if (X < 0 || Y < 0) {
+			setLocationRelativeTo(null);
+		} else {
+			setLocation(X, Y);
+		}
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		if (FULLSCREEN) {
+			aMap.get("fs").actionPerformed(null);
+		}
+		if (EXCLUSIVE) {
+			aMap.get("x").actionPerformed(null);
+		}
 	}
 
 	public void startSlideshow() {
@@ -266,6 +319,20 @@ public class MainWindow extends JFrame {
 
 	@Override
 	public void dispose() {
+		if (!fullScreen && !exclusiveFullscreen) {
+			savePosition(this);
+		}
+		INI.setInteger("window", "left", X);
+		INI.setInteger("window", "top", Y);
+		INI.setInteger("window", "width", WIDTH);
+		INI.setInteger("window", "height", HEIGHT);
+		INI.setBoolean("window", "fullScreen", fullScreen);
+		INI.setBoolean("window", "exclusiveFullScreen", exclusiveFullscreen);
+		try {
+			INI.writeIni();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		if (run != null) {
 			run.interrupt();
 			run = null;
