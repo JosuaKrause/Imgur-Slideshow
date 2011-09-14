@@ -233,6 +233,7 @@ public class MainWindow extends JFrame {
 		final InputMap iMap = new InputMap();
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, 0), "fs");
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), "next");
+		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "next");
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0), "quit");
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0), "x");
 		view.setActionMap(aMap);
@@ -287,8 +288,10 @@ public class MainWindow extends JFrame {
 							if (!exclusiveFullscreen) {
 								MainWindow.this.setTitle(img.getTitle());
 							}
-							synchronized (this) {
-								wait(delay);
+							if (display != null) {
+								synchronized (this) {
+									wait(delay);
+								}
 							}
 						} else {
 							images = null;

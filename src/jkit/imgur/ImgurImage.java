@@ -23,8 +23,8 @@ public class ImgurImage {
 
 	private final Dimension dim;
 
-	public ImgurImage(String title, String hash, String ext, int width,
-			int height) throws MalformedURLException {
+	public ImgurImage(final String title, final String hash, final String ext,
+			final int width, final int height) throws MalformedURLException {
 		this.title = title != null ? title : "Slideshow - Imgur";
 		url = new URL("http://i.imgur.com/" + hash + ext);
 		dim = new Dimension(width, height);
@@ -42,7 +42,11 @@ public class ImgurImage {
 
 	public Image getImage() throws IOException {
 		if (img == null) {
-			img = ImageIO.read(url);
+			try {
+				img = ImageIO.read(url);
+			} catch (final OutOfMemoryError e) {
+				img = null;
+			}
 		}
 		return img;
 	}
