@@ -9,6 +9,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
@@ -60,11 +61,11 @@ public class MainWindow extends JFrame {
 	public static final boolean FULLSCREEN = INI.getBoolean("window",
 			"fullScreen");
 
-	public static void savePosition(MainWindow wnd) {
-		Point p = wnd.getLocation();
+	public static void savePosition(final MainWindow wnd) {
+		final Point p = wnd.getLocation();
 		X = p.x;
 		Y = p.y;
-		Dimension dim = wnd.view.getSize();
+		final Dimension dim = wnd.view.getSize();
 		WIDTH = dim.width;
 		HEIGHT = dim.height;
 	}
@@ -90,19 +91,20 @@ public class MainWindow extends JFrame {
 		private boolean vertical;
 
 		@Override
-		protected void paintComponent(Graphics gfx) {
-			Graphics2D g = (Graphics2D) gfx.create();
-			Dimension own = getSize();
+		protected void paintComponent(final Graphics gfx) {
+			final Graphics2D g = (Graphics2D) gfx.create();
+			final Dimension own = getSize();
 			g.setColor(Color.BLACK);
 			g.fillRect(0, 0, own.width + 1, own.height + 1);
 			if (display == null) {
 				return;
 			}
 			if (display != last || lastDim != own) {
-				Dimension pic = displayDim == null ? new Dimension(display
-						.getWidth(this), display.getHeight(this)) : displayDim;
-				double verWidth = (double) pic.width * (double) own.height
-						/ pic.height;
+				final Dimension pic = displayDim == null ? new Dimension(
+						display.getWidth(this), display.getHeight(this))
+						: displayDim;
+				final double verWidth = (double) pic.width
+						* (double) own.height / pic.height;
 				vertical = verWidth <= own.width;
 				if (vertical) {
 					scaled = display.getScaledInstance(-1, own.height,
@@ -154,18 +156,18 @@ public class MainWindow extends JFrame {
 		addMouseListener(new MouseAdapter() {
 
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseClicked(final MouseEvent e) {
 				nextImage();
 			}
 
 		});
-		ActionMap aMap = new ActionMap();
+		final ActionMap aMap = new ActionMap();
 		aMap.put("next", new AbstractAction() {
 
 			private static final long serialVersionUID = -7372695232568761641L;
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(final ActionEvent e) {
 				nextImage();
 			}
 		});
@@ -174,7 +176,7 @@ public class MainWindow extends JFrame {
 			private static final long serialVersionUID = 2266843640938062469L;
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(final ActionEvent e) {
 				setVisible(false);
 				dispose();
 			}
@@ -185,7 +187,7 @@ public class MainWindow extends JFrame {
 			private static final long serialVersionUID = -2109281969355293043L;
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(final ActionEvent e) {
 				if (exclusiveFullscreen) {
 					return;
 				}
@@ -206,14 +208,15 @@ public class MainWindow extends JFrame {
 			private static final long serialVersionUID = -2949886933502495995L;
 
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(final ActionEvent e) {
 				if (!fullScreen) {
 					savePosition(MainWindow.this);
 				}
-				GraphicsEnvironment ge = GraphicsEnvironment
-						.getLocalGraphicsEnvironment();
-				GraphicsDevice[] gs = ge.getScreenDevices();
-				GraphicsDevice gd = gs[0];
+				final GraphicsConfiguration gc = MainWindow.this
+						.getGraphicsConfiguration();
+				final GraphicsDevice gd = gc != null ? gc.getDevice()
+						: GraphicsEnvironment.getLocalGraphicsEnvironment()
+								.getDefaultScreenDevice();
 				if (!exclusiveFullscreen) {
 					setResizable(false);
 					gd.setFullScreenWindow(MainWindow.this);
@@ -227,7 +230,7 @@ public class MainWindow extends JFrame {
 			}
 
 		});
-		InputMap iMap = new InputMap();
+		final InputMap iMap = new InputMap();
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F, 0), "fs");
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), "next");
 		iMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Q, 0), "quit");
@@ -252,8 +255,9 @@ public class MainWindow extends JFrame {
 	}
 
 	public void startSlideshow() {
-		if (run != null)
+		if (run != null) {
 			throw new IllegalStateException("already sliding");
+		}
 		run = new Thread() {
 
 			private Iterator<ImgurImage> images = null;
@@ -270,7 +274,7 @@ public class MainWindow extends JFrame {
 								MainWindow.this
 										.setTitle("Loading next image...");
 							}
-							ImgurImage img = images.next();
+							final ImgurImage img = images.next();
 							images.remove();
 							setCurrent(img);
 							if (img.isValidDimension()) {
@@ -289,9 +293,9 @@ public class MainWindow extends JFrame {
 						} else {
 							images = null;
 						}
-					} catch (IOException e) {
+					} catch (final IOException e) {
 						e.printStackTrace();
-					} catch (InterruptedException e) {
+					} catch (final InterruptedException e) {
 						interrupt();
 					}
 				}
@@ -301,7 +305,7 @@ public class MainWindow extends JFrame {
 		run.start();
 	}
 
-	private void setCurrent(ImgurImage img) {
+	private void setCurrent(final ImgurImage img) {
 		if (cur != null) {
 			cur.dispose();
 		}
@@ -330,7 +334,7 @@ public class MainWindow extends JFrame {
 		INI.setBoolean("window", "exclusiveFullScreen", exclusiveFullscreen);
 		try {
 			INI.writeIni();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		if (run != null) {
@@ -340,8 +344,8 @@ public class MainWindow extends JFrame {
 		super.dispose();
 	}
 
-	public static void main(String[] args) {
-		MainWindow mw = new MainWindow();
+	public static void main(final String[] args) {
+		final MainWindow mw = new MainWindow();
 		mw.startSlideshow();
 		mw.setVisible(true);
 	}
