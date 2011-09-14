@@ -218,8 +218,8 @@ public class MainWindow extends JFrame {
 						: GraphicsEnvironment.getLocalGraphicsEnvironment()
 								.getDefaultScreenDevice();
 				if (!exclusiveFullscreen) {
-					setResizable(false);
 					gd.setFullScreenWindow(MainWindow.this);
+					setResizable(false);
 					exclusiveFullscreen = true;
 				} else {
 					setResizable(true);
